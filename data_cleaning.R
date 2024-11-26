@@ -269,4 +269,5 @@ ggplot(data_filtered, aes(x = `Revenue.per.Bed`)) +
 
 # so here ends the linear models
 # now we can deal with the strategies of machine learning.
-
+final_output_for_ml <- "cleaned_data_final.csv"
+write.csv(data_filtered, file = final_output_for_ml, row.names = FALSE)
