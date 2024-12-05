@@ -12,8 +12,8 @@ data_dir <- "Hospital Provider Cost Report"
 
 # Generate the list of file paths for the years 2011 to 2022
 file_info <- data.frame(
-  file_path = sprintf("%s/%d/CostReport_%d_Final.csv", data_dir, 2012:2022, 2012:2022),
-  year = 2012:2022
+  file_path = sprintf("%s/%d/CostReport_%d_Final.csv", data_dir, 2011:2022, 2011:2022),
+  year = 2011:2022
 )
 
 # Read all files and merge them into a single data.table
