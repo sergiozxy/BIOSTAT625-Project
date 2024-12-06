@@ -1,4 +1,5 @@
 library(dplyr)
+library(tidyverse)
 library(tidygeocoder)
 
 
@@ -34,6 +35,7 @@ geocoded_sample <- sampled_hospitals %>%
     method = "osm"
   )
 
+
 geocoded_sample_clean <- geocoded_sample %>%
   filter(!is.na(lat) & !is.na(long))
 
@@ -47,13 +49,22 @@ sample50_analysis_geocode <- updated_hospitals %>%
   select(Hospital.Name, Street.Address, City, State.Code, lat, long, Revenue.per.Bed, Cost.to.Revenue.Ratio )
 # add variable: FTE - Employees on Payroll
 
-
+sample50_state_aggregated <- updated_hospitals %>%
+  group_by(State.Code) %>%
+  summarise(
+    AvgCostToRevenue = mean(Cost.to.Revenue.Ratio, na.rm = TRUE),
+    AvgRevenuePerBed = mean(Revenue.per.Bed, na.rm = TRUE)
+  )
 
 # View the final dataset
 head(sample50_analysis_geocode)
 save(sample50_analysis_geocode, file = "sample50_analysis_geocode.RData")
 
+head(sample50_state_aggregated)
+save(sample50_state_aggregated, file = "sample50_state_aggregated.RData")
+
 write.csv(sample50_analysis_geocode, 'sample50_analysis_geocode.csv')
+write.csv(sample50_state_aggregated, 'sample50_state_aggregated.csv')
 
 # Check the number of geocoded hospitals
 n_distinct(sample50_analysis_geocode$Hospital.Name)
