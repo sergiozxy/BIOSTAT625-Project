@@ -1,5 +1,5 @@
 # replace this with your directory
-setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
+# setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
 
 # we first directly merge the data together:
 library(dplyr)
@@ -33,7 +33,7 @@ print(na_counts / nrow(merged_data))
 
 # note book for the variables
 # some basic information
-# rpt_rec_num 
+# rpt_rec_num
 # Provider CCN
 # Hospital Name
 # Street Address
@@ -57,7 +57,7 @@ print(na_counts / nrow(merged_data))
 # Accounts Payable
 # Total Current Assets
 # Total Fixed Assets
-# General Fund Balance 
+# General Fund Balance
 # Inventory
 # Total Patient Revenue
 
@@ -166,7 +166,7 @@ cleaned_data2 <- cleaned_data2 %>%
 
 cleaned_data2 <- cleaned_data2 %>%
   mutate(across(
-    where(~ inherits(., "integer64")), 
+    where(~ inherits(., "integer64")),
     as.numeric
   ))
 
@@ -182,7 +182,7 @@ cat("Data has been successfully saved to", output_file, "\n")
 
 data <- read.csv(output_file)
 baseline_formula <- as.formula(
-  "`Cost.to.Revenue.Ratio` ~ 
+  "`Cost.to.Revenue.Ratio` ~
   `Total.Discharges..V...XVIII...XIX...Unknown.` +
   `Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds` +
   `Total.Salaries.From.Worksheet.A` +
@@ -229,7 +229,7 @@ ggplot(data_filtered, aes(x = `Cost.to.Revenue.Ratio`)) +
 # we also need to remove the data that is too concentrated on the data.
 # now for the model 2:
 baseline_formula2 <- as.formula(
-  "`Revenue.per.Bed` ~ 
+  "`Revenue.per.Bed` ~
   `Total.Discharges..V...XVIII...XIX...Unknown.` +
   `Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds` +
   `Total.Salaries.From.Worksheet.A` +
