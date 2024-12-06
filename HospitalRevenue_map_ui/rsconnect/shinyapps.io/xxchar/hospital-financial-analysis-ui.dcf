@@ -1,0 +1,10 @@
+name: hospital-financial-analysis-ui
+title:
+username: xxchar
+account: xxchar
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13537927
+bundleId: 9472487
+url: https://xxchar.shinyapps.io/hospital-financial-analysis-ui/
+version: 1

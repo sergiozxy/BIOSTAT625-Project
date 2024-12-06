@@ -5,6 +5,6 @@ account: xxchar
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13535810
-bundleId: 9470765
+bundleId: 9472483
 url: https://xxchar.shinyapps.io/shiny_1205/
 version: 1

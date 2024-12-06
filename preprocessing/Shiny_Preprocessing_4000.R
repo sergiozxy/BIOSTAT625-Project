@@ -2,6 +2,10 @@ library(dplyr)
 library(tidyverse)
 library(tidygeocoder)
 
+data_file <- "cleaned_data_final.csv"
+data_filtered <- read_csv(data_file)
+
+
 # Step 1: Preprocess Hospital.Name to filter out anomalies
 valid_hospitals <- data_filtered %>%
   filter(grepl("\\d+.*[A-Za-z]", Street.Address)) %>%  # Ensure valid street addresses

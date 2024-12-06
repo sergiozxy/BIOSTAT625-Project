@@ -1,7 +1,10 @@
 library(dplyr)
 library(tidyverse)
 library(tidygeocoder)
+library(readr)
 
+data_file <- "cleaned_data_final.csv"
+data_filtered <- read_csv(data_file)
 
 valid_addresses <- data_filtered %>%
   filter(grepl("\\d+.*[A-Za-z]", Street.Address))

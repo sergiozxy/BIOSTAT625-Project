@@ -16,15 +16,21 @@ if (file.exists(data_file)) {
 }
 sample_analysis_geocode <- sample_analysis_geocode %>%
   filter(Revenue.per.Bed <= 15)
+state_data <- read.csv("state_aggregated.csv")
+state_data <- state_data %>%
+  mutate(State.Name = tolower(state.name[match(State.Code, state.abb)])) %>%
+  filter(!is.na(State.Name))  # Exclude rows with missing state names
 
-# state_file <- "state_aggregated.csv"
-# # state_file <- 'sample50_state_aggregated.csv'
-# if (file.exists(state_file)) {
-#   state_aggregate <- readr::read_csv(state_file)
-#   message("Data loaded successfully from ", state_file)
-# } else {
-#   stop("Error: Data file not found. Please ensure ", state_file, " exists.")
-# }
+us_map <- maps::map("state", fill = TRUE, plot = FALSE)
+us_map_sf <- st_as_sf(us_map, crs = 4326)
+
+us_map_merged <- us_map_sf %>%
+  left_join(state_data, by = c("ID" = "State.Name"))
+
+palette_cost <- colorNumeric(palette = "YlOrRd", domain = state_data$AvgCostToRevenue)
+palette_revenue <- colorNumeric(palette = "Blues", domain = state_data$AvgRevenuePerBed)
+
+
 
 
 # Ensure 'year' column exists; if not, create one
@@ -35,36 +41,81 @@ if (!"year" %in% names(sample_analysis_geocode)) {
 
 # Define UI
 ui <- fluidPage(
-  titlePanel("Interactive Hospital Map"),
+  # Header Section
+  titlePanel(
+    h1("Interactive US Map for Hospital Financial Performance (2011-2022)", align = "center"),
+    windowTitle = "Hospital Financial Performance Analysis"
+  ),
+
+  # Project Details
+  fluidRow(
+    column(12,
+           wellPanel(
+             h3("Project Objective"),
+             p("The goal of this project is to analyze and predict hospital operating costs and revenue trends,
+               enabling hospital administrators to make informed strategic decisions.
+               Using advanced statistical models and foundational machine learning techniques,
+               the project aims to deliver actionable insights into financial performance and future trends.
+               Data Source is from the ",
+               a("CMS Hospital Provider Cost Report dataset",
+                 href = "https://data.cms.gov/provider-compliance/cost-report/hospital-provider-cost-report",
+                 target = "_blank"),
+               ".")
+           )
+             # add : https://data.cms.gov/provider-compliance/cost-report/hospital-provider-cost-report
+
+
+
+
+    )
+  ),
+
+  # Tabset Panel
   tabsetPanel(
     tabPanel("Hospital-Level Map",
              sidebarLayout(
                sidebarPanel(
                  sliderInput("year",
                              "Select Year:",
-                             min = min(sample_analysis_geocode$year, na.rm = TRUE),
-                             max = max(sample_analysis_geocode$year, na.rm = TRUE),
-                             value = min(sample_analysis_geocode$year, na.rm = TRUE),
+                             min = 2011,
+                             max = 2022,
+                             value = 2011,
                              step = 1,
                              sep = ""),
-                 # checkboxInput("showRevenueLegend", "Show Revenue per Bed Legend", value = TRUE),
-                 # checkboxInput("showCostLegend", "Show Cost-to-Revenue Ratio Legend", value = TRUE)
+                 checkboxInput("showRevenueLegend", "Show Revenue per Bed Legend", value = TRUE)
                ),
                mainPanel(
-                 leafletOutput("hospitalMap")
+                 leafletOutput("hospitalMap", height = 600)
                )
              )),
     tabPanel("State-Level Summary",
              fluidRow(
                column(
                  width = 6,
+                 h4("State Map - Avg Revenue per Bed (2011-2022)", align = "center"),
                  leafletOutput("stateMapRevenue", height = 500)
                ),
                column(
                  width = 6,
+                 h4("State Map - Avg Cost-to-Revenue Ratio (2011-2022)", align = "center"),
                  leafletOutput("stateMapCost", height = 500)
                )
              )
+    )
+  ),
+
+  # Footer Section
+  fluidRow(
+    column(12,
+           tags$footer(
+             style = "margin-top: 30px; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #e4e4e4;",
+             p(
+               style = "text-align: center; font-size: 14px;",
+               "Project Name: 'Cost Analysis for Hospital Financial Performance in the US (2011-2022)' | ",
+               "BIOSTAT 625 Group Project ",
+               "Major Contributions by: Charlotte Xu"
+             )
+           )
     )
   )
 )
@@ -135,81 +186,6 @@ server <- function(input, output, session) {
   })
 
 
-  # output$stateMapRevenue <- renderLeaflet({
-  #   req(test_data)  # Use subset of data
-  #   leaflet(test_data) %>%
-  #     addTiles() %>%
-  #     addPolygons(
-  #       lng = ~long, lat = ~lat, group = ~group,
-  #       fillColor = ~fillColorRevenue,
-  #       fillOpacity = 0.8,
-  #       color = "black", # Boundary color
-  #       weight = 1,      # Boundary thickness
-  #       popup = ~paste(
-  #         "<b>State:</b>", State.Code, "<br>",
-  #         "<b>Average Revenue per Bed:</b>", round(AvgRevenuePerBed, 2), "<br>",
-  #         "<b>Number of Hospitals:</b>", NumberOfHospitals
-  #       )
-  #     ) %>%
-  #     addLegend(
-  #       position = "bottomright",
-  #       pal = colorNumeric(
-  #         palette = "Blues",
-  #         domain = state_map_data$AvgRevenuePerBed
-  #       ),
-  #       values = state_map_data$AvgRevenuePerBed,
-  #       title = "Avg Revenue per Bed",
-  #       opacity = 1
-  #     )
-  # })
-
-  # # Render Cost-to-Revenue Ratio Map
-  # output$stateMapCost <- renderLeaflet({
-  #   leaflet(state_map_data) %>%
-  #     addTiles() %>%
-  #     addPolygons(
-  #       lng = ~long, lat = ~lat, group = ~group,
-  #       fillColor = ~fillColorCost,
-  #       fillOpacity = 0.8,
-  #       color = "black", # Boundary color
-  #       weight = 1,      # Boundary thickness
-  #       popup = ~paste(
-  #         "<b>State:</b>", State.Code, "<br>",
-  #         "<b>Average Cost-to-Revenue Ratio:</b>", round(AvgCostToRevenue, 2), "<br>",
-  #         "<b>Number of Hospitals:</b>", NumberOfHospitals
-  #       )
-  #     ) %>%
-  #     addLegend(
-  #       position = "bottomright",
-  #       pal = colorNumeric(
-  #         palette = "Reds",
-  #         domain = state_map_data$AvgCostToRevenue
-  #       ),
-  #       values = state_map_data$AvgCostToRevenue,
-  #       title = "Avg Cost-to-Revenue Ratio",
-  #       opacity = 1
-  #     )
-  # })
-
-  # Read the CSV data
-  state_data <- read.csv("state_aggregated.csv")
-
-  # Add full state names to the data
-  state_data <- state_data %>%
-    mutate(State.Name = tolower(state.name[match(State.Code, state.abb)])) %>%
-    filter(!is.na(State.Name))  # Exclude rows with missing state names
-
-  # Load US states shapefile using `maps` and convert to `sf` object
-  us_map <- map("state", fill = TRUE, plot = FALSE)
-  us_map_sf <- st_as_sf(us_map, crs = 4326)
-
-  # Join state data with map data
-  us_map_merged <- us_map_sf %>%
-    left_join(state_data, by = c("ID" = "State.Name"))
-
-  # Define color palettes
-  palette_cost <- colorNumeric(palette = "YlOrRd", domain = state_data$AvgCostToRevenue)
-  palette_revenue <- colorNumeric(palette = "Blues", domain = state_data$AvgRevenuePerBed)
 
   # Render the map for AvgCostToRevenue
   output$stateMapCost <- renderLeaflet({
@@ -228,7 +204,7 @@ server <- function(input, output, session) {
       ) %>%
       addLegend(
         pal = palette_cost,
-        values = ~AvgCostToRevenue,
+        values = ~AvgCostToRevenue[!is.na(AvgCostToRevenue)],
         position = "bottomright",
         title = "Avg Cost to Revenue"
       )
@@ -251,7 +227,7 @@ server <- function(input, output, session) {
       ) %>%
       addLegend(
         pal = palette_revenue,
-        values = ~AvgRevenuePerBed,
+        values = ~AvgRevenuePerBed[!is.na(AvgRevenuePerBed)],
         position = "bottomright",
         title = "Avg Revenue per Bed"
       )
