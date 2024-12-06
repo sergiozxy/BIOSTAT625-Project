@@ -1,5 +1,5 @@
 # replace this with your directory
-setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
+setwd("E:/umich/BIOSTAT625-Project")
 
 # we first directly merge the data together:
 library(dplyr)
@@ -27,8 +27,9 @@ ggsave(filename = "Cost_to_Revenue_Ratio_Distribution.pdf",
        height = 6)
 
 
+data <- data[data$`Revenue.per.Bed` < 20, ]
 plot2 <- ggplot(data, aes(x = `Revenue.per.Bed`)) +
-  geom_histogram(aes(y = ..density..), binwidth = 50, fill = "lightblue", color = "black") +
+  geom_histogram(aes(y = ..density..), binwidth = 1, fill = "lightblue", color = "black") +
   geom_density(color = "blue", size = 1) +
   labs(title = "Distribution of Revenue per Bed",
        x = "Revenue per Bed",
