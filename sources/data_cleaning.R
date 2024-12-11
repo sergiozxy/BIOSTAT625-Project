@@ -1,5 +1,6 @@
 # replace this with your directory
 # setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
+# setwd("E:/umich/BIOSTAT625-Project")
 
 # we first directly merge the data together:
 library(dplyr)
@@ -181,93 +182,37 @@ cat("Data has been successfully saved to", output_file, "\n")
 
 
 data <- read.csv(output_file)
-baseline_formula <- as.formula(
-  "`Cost.to.Revenue.Ratio` ~
-  `Total.Discharges..V...XVIII...XIX...Unknown.` +
-  `Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds` +
-  `Total.Salaries.From.Worksheet.A` +
-  `Inpatient.Total.Charges` +
-  `Outpatient.Total.Charges` +
-  `Total.Income` +
-  `Total.Other.Income` +
-  `Total.Liabilities.and.Fund.Balances` +
-  `Accounts.Payable` +
-  `Total.Current.Assets` +
-  `Total.Fixed.Assets` +
-  `General.Fund.Balance` +
-  Inventory +
-  `Total.Patient.Revenue` +
-  `Number.of.Beds` +
-  year +
-  `State.Code`"
-)
+
 
 # we need to remove the outliers, since they are too far away from our concentrated data.
 # you can not directly regress the model since the outliers are also influential points.
 data_filtered <- data[data$`Cost.to.Revenue.Ratio` <= 100, ]
 data_filtered$Revenue.per.Bed <- data_filtered$`Revenue.per.Bed` / 1000000
 data_filtered <- data_filtered[data_filtered$`Revenue.per.Bed` <= 100, ]
-# colnames(data)
-baseline_model <- lm(baseline_formula, data = data_filtered)
 
-# Print the summary of the regression
-summary(baseline_model)
-
-ggplot(data_filtered, aes(x = `Cost.to.Revenue.Ratio`)) +
-  geom_histogram(aes(y = ..density..), binwidth = 0.1, fill = "lightblue", color = "black") +
-  geom_density(color = "blue", size = 1) +
-  labs(title = "Distribution of Cost to Revenue Ratio",
-       x = "Cost to Revenue Ratio",
-       y = "Density") +
-  theme_minimal()
-
-
-# median(data_filtered$`Cost.to.Revenue.Ratio`, na.rm = TRUE)
-# mean(data$`Total.Patient.Revenue`, na.rm = TRUE)
-# mean(data$`Total.Costs`, na.rm = TRUE)
-
-# we also need to remove the data that is too concentrated on the data.
-# now for the model 2:
-baseline_formula2 <- as.formula(
-  "`Revenue.per.Bed` ~
-  `Total.Discharges..V...XVIII...XIX...Unknown.` +
-  `Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds` +
-  `Total.Salaries.From.Worksheet.A` +
-  `Inpatient.Total.Charges` +
-  `Outpatient.Total.Charges` +
-  `Total.Income` +
-  `Total.Other.Income` +
-  `Total.Liabilities.and.Fund.Balances` +
-  `Accounts.Payable` +
-  `Total.Current.Assets` +
-  `Total.Fixed.Assets` +
-  `General.Fund.Balance` +
-  Inventory +
-  `Total.Patient.Revenue` +
-  `Number.of.Beds` +
-  year +
-  `State.Code`"
-)
-baseline_model2 <- lm(baseline_formula2, data = data_filtered)
-print(summary(baseline_model2))
+print(names(data))
 
 
 
-ggplot(data_filtered, aes(x = `Revenue.per.Bed`)) +
-  geom_histogram(aes(y = ..density..), binwidth = 50, fill = "lightblue", color = "black") +
-  geom_density(color = "blue", size = 1) +
-  labs(title = "Distribution of Revenue per Bed",
-       x = "Revenue per Bed",
-       y = "Density") +
-  theme_minimal()
 
-# max(data_filtered$`Revenue.per.Bed`, na.rm = TRUE)
-# quantile_99 <- quantile(data_filtered$`Revenue.per.Bed`, probs = 0.999, na.rm = TRUE)
-# print(quantile_99)
-# mean(data_filtered$`Revenue.per.Bed`, na.rm = TRUE)
-# median(data_filtered$`Revenue.per.Bed`, na.rm = TRUE)
 
-# so here ends the linear models
-# now we can deal with the strategies of machine learning.
+data_filtered$Total.Salaries.From.Worksheet.A <- data_filtered$`Total.Salaries.From.Worksheet.A` / 1000000
+data_filtered$Inpatient.Total.Charges <- data_filtered$`Inpatient.Total.Charges` / 1000000
+data_filtered$Outpatient.Total.Charges <- data_filtered$`Outpatient.Total.Charges` / 1000000
+data_filtered$Total.Income <- data_filtered$`Total.Income` / 1000000
+data_filtered$Total.Other.Income <- data_filtered$`Total.Other.Income` / 1000000
+data_filtered$Total.Liabilities.and.Fund.Balances <- data_filtered$`Total.Liabilities.and.Fund.Balances` / 1000000
+data_filtered$Accounts.Payable <- data_filtered$`Accounts.Payable` / 1000000
+data_filtered$Total.Current.Assets <- data_filtered$`Total.Current.Assets` / 1000000
+data_filtered$Total.Fixed.Assets <- data_filtered$`Total.Fixed.Assets` / 1000000
+data_filtered$General.Fund.Balance <- data_filtered$`General.Fund.Balance` / 1000000
+data_filtered$Total.Patient.Revenue <- data_filtered$`Total.Patient.Revenue` / 1000000
+data_filtered$Total.Patient.Revenue <- data_filtered$`Total.Patient.Revenue` / 1000000
+
+
+
+# convert above information to million instead of units
+
 final_output_for_ml <- "cleaned_data_final.csv"
 write.csv(data_filtered, file = final_output_for_ml, row.names = FALSE)
+

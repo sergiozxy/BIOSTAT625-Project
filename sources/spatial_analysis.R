@@ -5,81 +5,106 @@ library(bit64)
 library(ggplot2)
 library(sf)
 library(spdep)
+library(lwgeom)
+library(stringi)
+library(tigris)
+library(spatialreg)
 
 setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
-
+setwd("E:/umich/BIOSTAT625-Project")
 final_output_for_ml <- "cleaned_data_final.csv"
 data <- read.csv(final_output_for_ml)
 
 aggregated_data <- data %>%
-  group_by(year, `State.Code`) %>%
-  summarise(
-    # Averaging cost-to-revenue ratio
-    avg_cost_to_revenue_ratio = mean(`Cost.to.Revenue.Ratio`, na.rm = TRUE),
-    
-    # Total discharges
-    total_discharges = sum(`Total.Discharges..V...XVIII...XIX...Unknown.`, na.rm = TRUE),
-    
-    # Hospital total days
-    total_hospital_days = sum(`Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds`, na.rm = TRUE),
-    
-    # Total salaries
-    total_salaries = sum(`Total.Salaries.From.Worksheet.A`, na.rm = TRUE),
-    
-    # Inpatient and outpatient charges
-    total_inpatient_charges = sum(`Inpatient.Total.Charges`, na.rm = TRUE),
-    total_outpatient_charges = sum(`Outpatient.Total.Charges`, na.rm = TRUE),
-    
-    # Income and other income
-    total_income = sum(`Total.Income`, na.rm = TRUE),
-    total_other_income = sum(`Total.Other.Income`, na.rm = TRUE),
-    
-    # Liabilities, assets, and balances
-    total_liabilities = sum(`Total.Liabilities.and.Fund.Balances`, na.rm = TRUE),
-    total_accounts_payable = sum(`Accounts.Payable`, na.rm = TRUE),
-    total_current_assets = sum(`Total.Current.Assets`, na.rm = TRUE),
-    total_fixed_assets = sum(`Total.Fixed.Assets`, na.rm = TRUE),
-    total_general_fund_balance = sum(`General.Fund.Balance`, na.rm = TRUE),
-    
-    # Inventory and patient revenue
-    total_inventory = sum(Inventory, na.rm = TRUE),
-    total_patient_revenue = sum(`Total.Patient.Revenue`, na.rm = TRUE),
-    
-    # Number of beds
-    total_beds = sum(`Number.of.Beds`, na.rm = TRUE),
-    
-    .groups = "drop" # Ungroup the data after summarisation
-  )
+    group_by(year, State.Code, County) %>% # Group by State and County
+    summarise(
+        avg_cost_to_revenue_ratio = mean(`Cost.to.Revenue.Ratio`, na.rm = TRUE),
+        total_discharges = sum(`Total.Discharges..V...XVIII...XIX...Unknown.`, na.rm = TRUE),
+        total_hospital_days = sum(`Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds`, na.rm = TRUE),
+        total_salaries = sum(`Total.Salaries.From.Worksheet.A`, na.rm = TRUE),
+        total_inpatient_charges = sum(`Inpatient.Total.Charges`, na.rm = TRUE),
+        total_outpatient_charges = sum(`Outpatient.Total.Charges`, na.rm = TRUE),
+        total_income = sum(`Total.Income`, na.rm = TRUE),
+        total_other_income = sum(`Total.Other.Income`, na.rm = TRUE),
+        total_liabilities = sum(`Total.Liabilities.and.Fund.Balances`, na.rm = TRUE),
+        total_accounts_payable = sum(`Accounts.Payable`, na.rm = TRUE),
+        total_current_assets = sum(`Total.Current.Assets`, na.rm = TRUE),
+        total_fixed_assets = sum(`Total.Fixed.Assets`, na.rm = TRUE),
+        total_general_fund_balance = sum(`General.Fund.Balance`, na.rm = TRUE),
+        total_inventory = sum(Inventory, na.rm = TRUE),
+        total_patient_revenue = sum(`Total.Patient.Revenue`, na.rm = TRUE),
+        total_beds = sum(`Number.of.Beds`, na.rm = TRUE),
+        .groups = "drop" # Ungroup after summarisation
+    )
 
-# Create a lookup table for state codes and state names
-state_code_name <- data.frame(
-  State.Code = c(
-    "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "GU", "HI", "IA", "ID", "IL", 
-    "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", 
-    "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VA", 
-    "VI", "VT", "WA", "WI", "WV", "WY", "AS"
-  ),
-  State.Name = c(
-    "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District of Columbia", 
-    "Delaware", "Florida", "Georgia", "Guam", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", 
-    "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", 
-    "Mississippi", "Montana", "North Carolina", "North Dakota", "Nebraska", "New Hampshire", "New Jersey", 
-    "New Mexico", "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico", 
-    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Virgin Islands", 
-    "Vermont", "Washington", "Wisconsin", "West Virginia", "Wyoming", "American Samoa"
-  )
-)
+counties_data <- counties(cb = TRUE, year = 2022)
+
+counties_data <- counties_data %>%
+    mutate(STATE_NAME = toupper(STATE_NAME))
+counties_data <- counties_data %>%
+    mutate(NAME = toupper(NAME))
 
 aggregated_data <- aggregated_data %>%
-  left_join(state_code_name, by = "State.Code")
+    mutate(County = toupper(County))
+aggregated_data <- aggregated_data %>%
+    mutate(State.Code = toupper(State.Code))
+aggregated_data <- aggregated_data[aggregated_data$County != "NONE", ]
+aggregated_data <- aggregated_data[aggregated_data$State.Code != "NONE", ]
+print(names(counties_data))
+
+counties_data <- counties_data %>%
+    group_by(STUSPS, NAME) %>%
+    filter(row_number() == 1) %>%
+    ungroup()
 
 
-# Load state shapefile/GeoJSON
-state_shapefile <- st_read("geodata/us-states.json")
 
-# Merge with aggregated data
-spatial_data <- state_shapefile %>%
-  left_join(aggregated_data, by = c("State.Code" = "State.Code"))
 
-spatial_data <- spatial_data %>%
-  mutate(centroid = st_centroid(geometry))
+spatial_data <- counties_data %>%
+    right_join(aggregated_data, by = c("STUSPS" = "State.Code", "NAME" = "County"))
+
+na_counts <- sapply(spatial_data, function(x) sum(is.na(x)))
+
+spatial_data <- na.omit(spatial_data)
+
+spatial_data <- st_transform(spatial_data, crs = 4326)
+
+# Extract centroids for spatial analysis
+spatial_data$centroid <- st_centroid(spatial_data$geometry)
+centroid_coords <- st_coordinates(spatial_data$centroid)
+
+knn_list <- knearneigh(centroid_coords, k = 5)
+knn_weights <- nb2listw(knn2nb(knn_list), style = "W", zero.policy = TRUE)
+
+# Perform Moran's I to check spatial autocorrelation
+moran_result <- moran.test(spatial_data$avg_cost_to_revenue_ratio, knn_weights, zero.policy = TRUE)
+print(moran_result)
+
+moran.plot(spatial_data$avg_cost_to_revenue_ratio, knn_weights, zero.policy = TRUE)
+
+
+
+# this is running too long I am thinking about how to revise the model
+
+slm_formula <- avg_cost_to_revenue_ratio ~ total_discharges + total_hospital_days + total_salaries
+
+slm_model <- lagsarlm(slm_formula, data = spatial_data, listw = knn_weights, zero.policy = TRUE)
+summary(slm_model)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
