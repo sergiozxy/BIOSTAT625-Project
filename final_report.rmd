@@ -1,0 +1,15 @@
+# Cost Analysis and Forecasting for Hospital Financial Performance
+
+## General Format of the report
+
+Charlotte Xu; Ruiyang Dong; Xuyuan Zhang; Zihan Wang
+
+## Introduction (based on the slides)  Ruiyang Dong
+
+## Data Cleaning (codes in the data_cleaning.R) (reformulate and talk about it in the cleaning) Ruiyang Dong and Xuyuan Zhang
+
+## Shiny results and statistical summary Charlotte Xu
+
+## linear models and spatial analysis Xuyuan Zhang
+
+## machine learning (zihan's codes) Zihan Wang
