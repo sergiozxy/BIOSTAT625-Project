@@ -1,5 +1,6 @@
 # replace this with your directory
-setwd("E:/umich/BIOSTAT625-Project")
+# setwd("E:/umich/BIOSTAT625-Project")
+setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
 
 # we first directly merge the data together:
 library(dplyr)
@@ -12,6 +13,7 @@ final_output_for_ml <- "cleaned_data_final.csv"
 data <- read.csv(final_output_for_ml)
 
 filtered_data <- data %>% filter(`Cost.to.Revenue.Ratio` < 1)
+filtered_data <- filtered_data %>% filter(`Cost.to.Revenue.Ratio` > -1)
 plot <- ggplot(filtered_data, aes(x = `Cost.to.Revenue.Ratio`)) +
   geom_histogram(aes(y = ..density..), binwidth = 0.1, fill = "lightblue", color = "black") +
   geom_density(color = "blue", size = 1) +
@@ -19,7 +21,7 @@ plot <- ggplot(filtered_data, aes(x = `Cost.to.Revenue.Ratio`)) +
        x = "Cost to Revenue Ratio",
        y = "Density") +
   theme_minimal()
-ggsave(filename = "Cost_to_Revenue_Ratio_Distribution.pdf",
+ggsave(filename = "./figures/Cost_to_Revenue_Ratio_Distribution.pdf",
        plot = plot,
        device = "pdf",
        dpi = 150,
@@ -38,7 +40,7 @@ plot2 <- ggplot(data, aes(x = `Revenue.per.Bed`)) +
 
 plot2
 
-ggsave(filename = "Revenue_per_Bed_Distribution.pdf",
+ggsave(filename = "./figures/Revenue_per_Bed_Distribution.pdf",
        plot = plot2,
        device = "pdf",
        dpi = 150,

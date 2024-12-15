@@ -6,7 +6,7 @@ library(ggplot2)
 library(readr)
 library(sf)
 memory.limit(size = 16000)  # Adjust as needed
-
+setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project/HospitalRevenue_map_ui")
 data_file <- "sample4000_analysis_geocode.csv"
 if (file.exists(data_file)) {
   sample_analysis_geocode <- readr::read_csv(data_file)

@@ -130,6 +130,8 @@ for (i in 1:5) {
   results_r2$knn_triangular <- c(results_r2$knn_triangular, calculate_r2(test_data$CostToRevenueRatio, predictions))
   results_rmse$knn_triangular <- c(results_rmse$knn_triangular, calculate_rmse(test_data$CostToRevenueRatio, predictions))
   
+  cat("Finish the KNN Result\n")
+  
   # SVM Linear
   svm_model <- svm(CostToRevenueRatio ~ ., data = train_data, type = "eps-regression", kernel = "linear")
   predictions <- predict(svm_model, test_data)
@@ -148,6 +150,7 @@ for (i in 1:5) {
   results_r2$svm_radial <- c(results_r2$svm_radial, calculate_r2(test_data$CostToRevenueRatio, predictions))
   results_rmse$svm_radial <- c(results_rmse$svm_radial, calculate_rmse(test_data$CostToRevenueRatio, predictions))
   
+  cat("Finish SVM Result\n")
   # Random Forest with impurity importance
   rf_model <- ranger(CostToRevenueRatio ~ ., data = train_data, importance = "impurity")
   predictions <- predict(rf_model, data = test_data)$predictions
@@ -159,6 +162,8 @@ for (i in 1:5) {
   predictions <- predict(rf_model, data = test_data)$predictions
   results_r2$rf_permutation <- c(results_r2$rf_permutation, calculate_r2(test_data$CostToRevenueRatio, predictions))
   results_rmse$rf_permutation <- c(results_rmse$rf_permutation, calculate_rmse(test_data$CostToRevenueRatio, predictions))
+  
+  cat("Finish Random Forest Result\n")
 }
 
 # Calculate mean R2 and RMSE for each model
@@ -236,4 +241,4 @@ plot <- ggplot(top_10_variables, aes(x = reorder(Variable, Importance), y = Impo
   ) +
   theme_minimal()  # Use a clean theme
 
-ggsave("top_10_influential_variables.png", plot = plot, width = 8, height = 6, dpi = 300)
+ggsave("./figures/top_10_influential_variables.png", plot = plot, width = 8, height = 6, dpi = 150)

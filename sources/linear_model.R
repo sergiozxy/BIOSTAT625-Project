@@ -5,8 +5,8 @@ library(zoo)
 library(bit64)
 library(ggplot2)
 
-# setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
-setwd("E:/umich/BIOSTAT625-Project")
+setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
+# setwd("E:/umich/BIOSTAT625-Project")
 
 final_output_for_ml <- "cleaned_data_final.csv"
 

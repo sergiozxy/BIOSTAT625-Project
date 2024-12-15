@@ -16,26 +16,26 @@ final_output_for_ml <- "cleaned_data_final.csv"
 data <- read.csv(final_output_for_ml)
 
 aggregated_data_state <- data %>%
-    group_by(year, State.Code) %>% # Group by State
-    summarise(
-        avg_cost_to_revenue_ratio = mean(`Cost.to.Revenue.Ratio`, na.rm = TRUE),
-        total_discharges = sum(`Total.Discharges..V...XVIII...XIX...Unknown.`, na.rm = TRUE),
-        total_hospital_days = sum(`Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds`, na.rm = TRUE),
-        total_salaries = sum(`Total.Salaries.From.Worksheet.A`, na.rm = TRUE),
-        total_inpatient_charges = sum(`Inpatient.Total.Charges`, na.rm = TRUE),
-        total_outpatient_charges = sum(`Outpatient.Total.Charges`, na.rm = TRUE),
-        total_income = sum(`Total.Income`, na.rm = TRUE),
-        total_other_income = sum(`Total.Other.Income`, na.rm = TRUE),
-        total_liabilities = sum(`Total.Liabilities.and.Fund.Balances`, na.rm = TRUE),
-        total_accounts_payable = sum(`Accounts.Payable`, na.rm = TRUE),
-        total_current_assets = sum(`Total.Current.Assets`, na.rm = TRUE),
-        total_fixed_assets = sum(`Total.Fixed.Assets`, na.rm = TRUE),
-        total_general_fund_balance = sum(`General.Fund.Balance`, na.rm = TRUE),
-        total_inventory = sum(Inventory, na.rm = TRUE),
-        total_patient_revenue = sum(`Total.Patient.Revenue`, na.rm = TRUE),
-        total_beds = sum(`Number.of.Beds`, na.rm = TRUE),
-        .groups = "drop" # Ungroup after summarisation
-    )
+  group_by(year, State.Code) %>% # Group by State
+  summarise(
+    avg_cost_to_revenue_ratio = mean(`Cost.to.Revenue.Ratio`, na.rm = TRUE),
+    total_discharges = mean(`Total.Discharges..V...XVIII...XIX...Unknown.`, na.rm = TRUE),
+    total_hospital_days = mean(`Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds`, na.rm = TRUE),
+    total_salaries = mean(`Total.Salaries.From.Worksheet.A`, na.rm = TRUE),
+    total_inpatient_charges = mean(`Inpatient.Total.Charges`, na.rm = TRUE),
+    total_outpatient_charges = mean(`Outpatient.Total.Charges`, na.rm = TRUE),
+    total_income = mean(`Total.Income`, na.rm = TRUE),
+    total_other_income = mean(`Total.Other.Income`, na.rm = TRUE),
+    total_liabilities = mean(`Total.Liabilities.and.Fund.Balances`, na.rm = TRUE),
+    total_accounts_payable = mean(`Accounts.Payable`, na.rm = TRUE),
+    total_current_assets = mean(`Total.Current.Assets`, na.rm = TRUE),
+    total_fixed_assets = mean(`Total.Fixed.Assets`, na.rm = TRUE),
+    total_general_fund_balance = mean(`General.Fund.Balance`, na.rm = TRUE),
+    total_inventory = mean(Inventory, na.rm = TRUE),
+    total_patient_revenue = mean(`Total.Patient.Revenue`, na.rm = TRUE),
+    total_beds = mean(`Number.of.Beds`, na.rm = TRUE),
+    .groups = "drop" # Ungroup after summarisation
+  )
 
 states_data <- states(cb = TRUE, year = 2022)
 
@@ -52,6 +52,7 @@ na_counts <- sapply(spatial_data_state, function(x) sum(is.na(x)))
 # Remove missing values
 spatial_data_state <- na.omit(spatial_data_state)
 
+spatial_data_state <- spatial_data_state[!spatial_data_state$STUSPS %in% c("AK", "HI", "MP", "PR", "TT", "GU"), ]
 # Transform to the desired coordinate system
 spatial_data_state <- st_transform(spatial_data_state, crs = 4326)
 
@@ -94,7 +95,6 @@ independent_vars <- spatial_data_state %>%
         total_beds
     ) %>%
     na.omit() # Remove rows with missing values
-
 coords <- st_coordinates(st_centroid(spatial_data_state$geometry))
 gwr_data <- cbind(
     avg_cost_to_revenue_ratio = dependent_var,
@@ -102,13 +102,6 @@ gwr_data <- cbind(
 ) %>%
     as.data.frame()
 gwr_data <- na.omit(gwr_data)
-
-gwr_bandwidth <- bw.gwr(
-  formula = avg_cost_to_revenue_ratio ~ ., 
-  data = gwr_data, 
-  adaptive = TRUE  # Use adaptive bandwidth for varying densities
-)
-
 
 spatial_gwr_data <- SpatialPointsDataFrame(
   coords = coords,  # Coordinates from st_centroid
@@ -134,89 +127,56 @@ summary(gwr_model)
 
 local_coefficients <- as.data.frame(gwr_model$SDF)
 
-global_r_squared <- gwr_model$GW.diagnostic$R2  # Global R²
-adjusted_r_squared <- gwr_model$GW.diagnostic$adjR2  # Adjusted R²
 aic_value <- gwr_model$GW.diagnostic$AICc  # Corrected Akaike Information Criterion
 
 # Print diagnostic metrics
-print(paste("Global R²: ", global_r_squared))
-print(paste("Adjusted R²: ", adjusted_r_squared))
 print(paste("AICc: ", aic_value))
 
 spatial_data_state$gwr_total_discharges <- local_coefficients$total_discharges
 
 # Plot the spatial variation of the coefficient
 library(ggplot2)
-ggplot(spatial_data_state) +
+result1 <- ggplot(spatial_data_state) +
   geom_sf(aes(fill = gwr_total_discharges)) +
   scale_fill_viridis_c() +
   theme_minimal() +
   labs(title = "GWR Coefficients for Total Discharges",
        fill = "Coefficient")
 
+ggsave(
+  filename = "./figures/GWR_State_Total_Discharges.png",
+  plot = result1,  # Pass the plot object
+  width = 8, height = 6, dpi = 150
+)
+
 # We can also work on the GWR of the county level data
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-library(dplyr)
-library(data.table)
-library(zoo)
-library(bit64)
-library(ggplot2)
-library(sf)
-library(spdep)
-library(lwgeom)
-library(stringi)
-library(tigris)
-library(GWmodel)
-
-setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
-# setwd("E:/umich/BIOSTAT625-Project")
 final_output_for_ml <- "cleaned_data_final.csv"
 data <- read.csv(final_output_for_ml)
 
 aggregated_data <- data %>%
-    group_by(year, State.Code, County) %>% # Group by State and County
-    summarise(
-        avg_cost_to_revenue_ratio = mean(`Cost.to.Revenue.Ratio`, na.rm = TRUE),
-        total_discharges = sum(`Total.Discharges..V...XVIII...XIX...Unknown.`, na.rm = TRUE),
-        total_hospital_days = sum(`Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds`, na.rm = TRUE),
-        total_salaries = sum(`Total.Salaries.From.Worksheet.A`, na.rm = TRUE),
-        total_inpatient_charges = sum(`Inpatient.Total.Charges`, na.rm = TRUE),
-        total_outpatient_charges = sum(`Outpatient.Total.Charges`, na.rm = TRUE),
-        total_income = sum(`Total.Income`, na.rm = TRUE),
-        total_other_income = sum(`Total.Other.Income`, na.rm = TRUE),
-        total_liabilities = sum(`Total.Liabilities.and.Fund.Balances`, na.rm = TRUE),
-        total_accounts_payable = sum(`Accounts.Payable`, na.rm = TRUE),
-        total_current_assets = sum(`Total.Current.Assets`, na.rm = TRUE),
-        total_fixed_assets = sum(`Total.Fixed.Assets`, na.rm = TRUE),
-        total_general_fund_balance = sum(`General.Fund.Balance`, na.rm = TRUE),
-        total_inventory = sum(Inventory, na.rm = TRUE),
-        total_patient_revenue = sum(`Total.Patient.Revenue`, na.rm = TRUE),
-        total_beds = sum(`Number.of.Beds`, na.rm = TRUE),
-        .groups = "drop" # Ungroup after summarisation
-    )
+  group_by(year, State.Code, County) %>% # Group by State and County
+  summarise(
+    avg_cost_to_revenue_ratio = mean(`Cost.to.Revenue.Ratio`, na.rm = TRUE),
+    total_discharges = mean(`Total.Discharges..V...XVIII...XIX...Unknown.`, na.rm = TRUE),
+    total_hospital_days = mean(`Hospital.Total.Days..V...XVIII...XIX...Unknown..For.Adults...Peds`, na.rm = TRUE),
+    total_salaries = mean(`Total.Salaries.From.Worksheet.A`, na.rm = TRUE),
+    total_inpatient_charges = mean(`Inpatient.Total.Charges`, na.rm = TRUE),
+    total_outpatient_charges = mean(`Outpatient.Total.Charges`, na.rm = TRUE),
+    total_income = mean(`Total.Income`, na.rm = TRUE),
+    total_other_income = mean(`Total.Other.Income`, na.rm = TRUE),
+    total_liabilities = mean(`Total.Liabilities.and.Fund.Balances`, na.rm = TRUE),
+    total_accounts_payable = mean(`Accounts.Payable`, na.rm = TRUE),
+    total_current_assets = mean(`Total.Current.Assets`, na.rm = TRUE),
+    total_fixed_assets = mean(`Total.Fixed.Assets`, na.rm = TRUE),
+    total_general_fund_balance = mean(`General.Fund.Balance`, na.rm = TRUE),
+    total_inventory = mean(Inventory, na.rm = TRUE),
+    total_patient_revenue = mean(`Total.Patient.Revenue`, na.rm = TRUE),
+    total_beds = mean(`Number.of.Beds`, na.rm = TRUE),
+    .groups = "drop" # Ungroup after summarisation
+  )
+
+aggregated_data <- aggregated_data[!aggregated_data$State.Code %in% c("AK", "HI", "MP", "PR", "TT", "GU"), ]
 
 counties_data <- counties(cb = TRUE, year = 2022)
 
@@ -238,12 +198,8 @@ counties_data <- counties_data %>%
     filter(row_number() == 1) %>%
     ungroup()
 
-
-
-
 spatial_data <- counties_data %>%
     right_join(aggregated_data, by = c("STUSPS" = "State.Code", "NAME" = "County"))
-
 
 na_counts <- sapply(spatial_data, function(x) sum(is.na(x)))
 
@@ -251,76 +207,64 @@ spatial_data <- na.omit(spatial_data)
 
 spatial_data <- st_transform(spatial_data, crs = 4326)
 
+spatial_data$year <- as.factor(spatial_data$year)
 
-# Extract centroids for spatial analysis
-spatial_data$centroid <- st_centroid(spatial_data$geometry)
-centroid_coords <- st_coordinates(spatial_data$centroid)
+gwr_results <- list()
 
-knn_list <- knearneigh(centroid_coords, k = 5)
-knn_weights <- nb2listw(knn2nb(knn_list), style = "W", zero.policy = TRUE)
+years <- unique(spatial_data$year)
+for (yr in years) {
+  cat("Processing year:", yr, "\n")
+  # Subset data for the year
+  spatial_data_year <- spatial_data[spatial_data$year == yr, ]
+  
+  # Extract centroids and coordinates
+  spatial_data_year$centroid <- st_centroid(spatial_data_year$geometry)
+  coords_year <- st_coordinates(spatial_data_year$centroid)
+  
+  # Create SpatialPointsDataFrame for GWR
+  spatial_gwr_data_year <- SpatialPointsDataFrame(
+    coords = coords_year,
+    data = st_drop_geometry(spatial_data_year),
+    proj4string = CRS("+proj=longlat +datum=WGS84")
+  )
+  
+  gwr_bandwidth <- bw.gwr(
+    formula = avg_cost_to_revenue_ratio ~ total_discharges + total_hospital_days + total_salaries + total_inventory, 
+    data = spatial_gwr_data_year, 
+    adaptive = TRUE  # Use adaptive bandwidth for varying densities
+  )
+  
+  print(paste("Selected GWR Bandwidth:", gwr_bandwidth))
+  
+  # Perform GWR
+  gwr_model <- gwr.basic(
+    formula = avg_cost_to_revenue_ratio ~ total_discharges + total_hospital_days + total_salaries + total_inventory, 
+    data = spatial_gwr_data_year, 
+    bw = gwr_bandwidth,  # can also use Preselected bandwidth
+    adaptive = TRUE
+  )
+  
+  gwr_results[[as.character(yr)]] <- gwr_model
+  
+  # Extract and store local coefficients for visualization
+  local_coefficients <- as.data.frame(gwr_model$SDF)
+  spatial_data_year$gwr_total_discharges <- local_coefficients$total_discharges
+  
+  gwr_plot <- ggplot(spatial_data_year) +
+    geom_sf(aes(fill = gwr_total_discharges)) +
+    scale_fill_viridis_c() +
+    theme_minimal() +
+    labs(
+      title = paste("GWR Coefficients for Total Discharges (Year:", yr, ")"),
+      fill = "Coefficient"
+    )
+  
+  ggsave(
+    filename = paste0("./figures/GWR_Total_Discharges_", yr, ".png"),
+    plot = gwr_plot,  # Pass the plot object
+    width = 8, height = 6, dpi = 150
+  )
+}
 
-# Perform Moran's I to check spatial autocorrelation
-moran_result <- moran.test(spatial_data$avg_cost_to_revenue_ratio, knn_weights, zero.policy = TRUE)
-print(moran_result)
-
-moran.plot(spatial_data$avg_cost_to_revenue_ratio, knn_weights, zero.policy = TRUE)
-
-# Extract coordinates
-coords <- st_coordinates(st_centroid(spatial_data$geometry))
-spatial_gwr_data <- SpatialPointsDataFrame(
-  coords = coords,  # Coordinates
-  data = st_drop_geometry(spatial_data),  # Drop geometry to keep attribute data
-  proj4string = CRS("+proj=longlat +datum=WGS84")  # Set CRS to WGS84
-)
-
-
-# gwr_bandwidth <- bw.gwr(
-#   formula = avg_cost_to_revenue_ratio ~ total_discharges + total_hospital_days + total_salaries, 
-#   data = spatial_gwr_data, 
-#   adaptive = TRUE  # Use adaptive bandwidth for varying densities
-# )
-
-# Adaptive bandwidth: 72 CV score: 524.1586 
-print(paste("Selected GWR Bandwidth:", gwr_bandwidth))
-# best is 72 and if you want to skip you can directly skip above codes
-gwr_bandwidth <- 72
-
-distance_matrix <- gw.dist(dp.locat = coordinates(spatial_gwr_data))
-
-start_time <- Sys.time()
-gwr_model <- gwr.basic(
-  formula = avg_cost_to_revenue_ratio ~ total_discharges + total_hospital_days + total_salaries, 
-  data = spatial_gwr_data, 
-  bw = gwr_bandwidth, 
-  adaptive = TRUE,
-  parallel.method = "omp",  # Enable OpenMP multi-threading
-  parallel.arg = 4  # Use 2 threads for testing
-)
-end_time <- Sys.time()
-print(end_time - start_time)
-
-# the running time is 7 minutes
-
-print("GWR Model Results:")
-summary(gwr_model)
-
-# Extract local coefficients
-local_coefficients <- as.data.frame(gwr_model$SDF)
-
-# Visualize coefficients for 'total_discharges'
-spatial_data$gwr_total_discharges <- local_coefficients$total_discharges
-
-library(ggplot2)
-
-
-spatial_data_filtered <- spatial_data[!spatial_data$STUSPS %in% c("AK", "HI", "MP", "PR", "TT", "GU"), ]
-
-
-ggplot(spatial_data_filtered) +
-  geom_sf(aes(fill = total_salaries)) +
-  scale_fill_viridis_c() +
-  theme_minimal() +
-  labs(title = "GWR Coefficients for Total Discharges (Excluding AK and HI)",
-       fill = "Coefficient")
-
-print(unique(spatial_data_filtered$STUSPS))
+# Summary of GWR results for all years
+lapply(gwr_results, summary)
