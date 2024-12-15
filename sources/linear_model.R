@@ -38,7 +38,21 @@ variables <- all.vars(baseline_formula)
 baseline_model <- lm(baseline_formula, data = data)
 
 # Print the summary of the regression
-summary(baseline_model)
+model_summary <- summary(baseline_model)
+
+coeff_table <- as.data.frame(model_summary$coefficients)
+
+coeff_table <- cbind(Variable = rownames(coeff_table), coeff_table)
+
+filtered_table <- subset(coeff_table, !grepl("State.Code", Variable))
+
+colnames(filtered_table) <- c("Variable", "Estimate", "Std. Error", "t value", "Pr(>|t|)")
+
+output_file <- "./tables/table1.csv"
+write.csv(filtered_table, file = output_file, row.names = FALSE)
+cat("Filtered and rounded results have been saved to:", output_file, "\n")
+
+# filtered_table[, 2:5] <- lapply(filtered_table[, 2:5], function(x) round(as.numeric(x), 3))
 
 # now for the model 2:
 baseline_formula2 <- as.formula(
@@ -62,5 +76,19 @@ baseline_formula2 <- as.formula(
   `State.Code`"
 )
 baseline_model2 <- lm(baseline_formula2, data = data)
-print(summary(baseline_model2))
+
+# Print the summary of the regression
+model_summary <- summary(baseline_model2)
+
+coeff_table <- as.data.frame(model_summary$coefficients)
+
+coeff_table <- cbind(Variable = rownames(coeff_table), coeff_table)
+
+filtered_table <- subset(coeff_table, !grepl("State.Code", Variable))
+
+colnames(filtered_table) <- c("Variable", "Estimate", "Std. Error", "t value", "Pr(>|t|)")
+
+output_file <- "./tables/table2.csv"
+write.csv(filtered_table, file = output_file, row.names = FALSE)
+cat("Filtered and rounded results have been saved to:", output_file, "\n")
 

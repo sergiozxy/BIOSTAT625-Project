@@ -1,0 +1,9 @@
+"Model","Mean_R2","Mean_RMSE"
+"knn_gaussian",0.7975,0.093
+"knn_rectangular",0.7712,0.0989
+"knn_triangular",0.8265,0.0861
+"svm_linear",0.3406,0.168
+"svm_polynomial",-83.8643,1.5151
+"svm_radial",0.5126,0.1444
+"rf_impurity",0.8001,0.0925
+"rf_permutation",0.8007,0.0923

@@ -11,6 +11,8 @@ library(e1071)
 library(lime)
 library(kknn)
 library(caret)
+library(parallel)
+library(doParallel)
 
 setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
 
@@ -132,33 +134,43 @@ for (i in 1:5) {
   
   cat("Finish the KNN Result\n")
   
-  # SVM Linear
-  svm_model <- svm(CostToRevenueRatio ~ ., data = train_data, type = "eps-regression", kernel = "linear")
-  predictions <- predict(svm_model, test_data)
-  results_r2$svm_linear <- c(results_r2$svm_linear, calculate_r2(test_data$CostToRevenueRatio, predictions))
-  results_rmse$svm_linear <- c(results_rmse$svm_linear, calculate_rmse(test_data$CostToRevenueRatio, predictions))
+  cl <- makeCluster(6) # Allocate three cores for parallel execution
+  registerDoParallel(cl)
   
-  # SVM Polynomial
-  svm_model <- svm(CostToRevenueRatio ~ ., data = train_data, type = "eps-regression", kernel = "polynomial")
-  predictions <- predict(svm_model, test_data)
-  results_r2$svm_polynomial <- c(results_r2$svm_polynomial, calculate_r2(test_data$CostToRevenueRatio, predictions))
-  results_rmse$svm_polynomial <- c(results_rmse$svm_polynomial, calculate_rmse(test_data$CostToRevenueRatio, predictions))
+  # Parallelized SVM computation for different kernels
+  svm_results <- foreach(kernel = c("linear", "polynomial", "radial"), .combine = list, .multicombine = TRUE) %dopar% {
+    library(e1071)
+    svm_model <- svm(CostToRevenueRatio ~ ., data = train_data, type = "eps-regression", kernel = kernel)
+    predictions <- predict(svm_model, test_data)
+    list(
+      kernel = kernel,
+      r2 = calculate_r2(test_data$CostToRevenueRatio, predictions),
+      rmse = calculate_rmse(test_data$CostToRevenueRatio, predictions)
+    )
+  }
   
-  # SVM Radial
-  svm_model <- svm(CostToRevenueRatio ~ ., data = train_data, type = "eps-regression", kernel = "radial")
-  predictions <- predict(svm_model, test_data)
-  results_r2$svm_radial <- c(results_r2$svm_radial, calculate_r2(test_data$CostToRevenueRatio, predictions))
-  results_rmse$svm_radial <- c(results_rmse$svm_radial, calculate_rmse(test_data$CostToRevenueRatio, predictions))
+  stopCluster(cl)
+  
+  # Store results in respective lists
+  results_r2$svm_linear <- c(results_r2$svm_linear, svm_results[[1]]$r2)
+  results_rmse$svm_linear <- c(results_rmse$svm_linear, svm_results[[1]]$rmse)
+  
+  results_r2$svm_polynomial <- c(results_r2$svm_polynomial, svm_results[[2]]$r2)
+  results_rmse$svm_polynomial <- c(results_rmse$svm_polynomial, svm_results[[2]]$rmse)
+  
+  results_r2$svm_radial <- c(results_r2$svm_radial, svm_results[[3]]$r2)
+  results_rmse$svm_radial <- c(results_rmse$svm_radial, svm_results[[3]]$rmse)
   
   cat("Finish SVM Result\n")
+  
   # Random Forest with impurity importance
-  rf_model <- ranger(CostToRevenueRatio ~ ., data = train_data, importance = "impurity")
+  rf_model <- ranger(CostToRevenueRatio ~ ., data = train_data, importance = "impurity", num.threads = 4)
   predictions <- predict(rf_model, data = test_data)$predictions
   results_r2$rf_impurity <- c(results_r2$rf_impurity, calculate_r2(test_data$CostToRevenueRatio, predictions))
   results_rmse$rf_impurity <- c(results_rmse$rf_impurity, calculate_rmse(test_data$CostToRevenueRatio, predictions))
   
   # Random Forest with permutation importance
-  rf_model <- ranger(CostToRevenueRatio ~ ., data = train_data, importance = "permutation")
+  rf_model <- ranger(CostToRevenueRatio ~ ., data = train_data, importance = "permutation", num.threads = 4)
   predictions <- predict(rf_model, data = test_data)$predictions
   results_r2$rf_permutation <- c(results_r2$rf_permutation, calculate_r2(test_data$CostToRevenueRatio, predictions))
   results_rmse$rf_permutation <- c(results_rmse$rf_permutation, calculate_rmse(test_data$CostToRevenueRatio, predictions))
@@ -180,6 +192,9 @@ performance_results <- data.frame(
 print("Model Performance (R2 and RMSE):")
 print(performance_results)
 
+output_file <- "./tables/model_performance_results.csv"
+write.csv(performance_results, file = output_file, row.names = FALSE)
+cat("Results have been saved to:", output_file, "\n")
 # > # Print results
 #   > print(mean_r2_knn_gaussian)
 # [1] 0.7977189
@@ -210,7 +225,8 @@ best_rf_model <- ranger(
   data = train_data, 
   num.trees = 500, 
   importance = "permutation", 
-  seed = 625
+  seed = 625,
+  num.threads = 4
 )
 
 best_rf_predictions <- predict(best_rf_model, data = test_data)$predictions
