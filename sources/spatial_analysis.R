@@ -1,19 +1,31 @@
-library(dplyr)
-library(data.table)
-library(zoo)
-library(bit64)
-library(ggplot2)
-library(sf)
-library(spdep)
-library(lwgeom)
-library(stringi)
-library(tigris)
-library(GWmodel)
+# ----------------------------------------------
+# 1. Load Required Libraries
+# ----------------------------------------------
+library(dplyr)         # Data manipulation
+library(data.table)    # Efficient data handling
+library(zoo)           # Time series utilities
+library(bit64)         # 64-bit integer support
+library(ggplot2)       # Visualization
+library(sf)            # Spatial data handling
+library(spdep)         # Spatial dependency analysis
+library(lwgeom)        # Geometry manipulation
+library(stringi)       # String handling
+library(tigris)        # Spatial boundary data for US
+library(GWmodel)       # Geographically Weighted Regression
 
+# ----------------------------------------------
+# 2. Set Working Directory and Load Data
+# ----------------------------------------------
 setwd("/home/xuyuan/Desktop/2024 fall/BIOSTAT625-Project")
-# setwd("E:/umich/BIOSTAT625-Project")
+# setwd("E:/umich/BIOSTAT625-Project") # Alternative directory
+
 final_output_for_ml <- "cleaned_data_final.csv"
 data <- read.csv(final_output_for_ml)
+
+# ----------------------------------------------
+# 3. Aggregate Data at State Level
+# ----------------------------------------------
+# Group and summarize data by year and state
 
 aggregated_data_state <- data %>%
   group_by(year, State.Code) %>% # Group by State
@@ -36,6 +48,10 @@ aggregated_data_state <- data %>%
     total_beds = mean(`Number.of.Beds`, na.rm = TRUE),
     .groups = "drop" # Ungroup after summarisation
   )
+
+# ----------------------------------------------
+# 4. Prepare Spatial Data for State-Level Analysis
+# ----------------------------------------------
 
 states_data <- states(cb = TRUE, year = 2022)
 
@@ -60,6 +76,10 @@ spatial_data_state <- st_transform(spatial_data_state, crs = 4326)
 spatial_data_state$centroid <- st_centroid(spatial_data_state$geometry)
 centroid_coords <- st_coordinates(spatial_data_state$centroid)
 
+# ----------------------------------------------
+# 5. Perform Spatial Autocorrelation Test (Moran's I)
+# ----------------------------------------------
+                    
 # Create spatial weights
 knn_list_state <- knearneigh(centroid_coords, k = 10)
 knn_weights_state <- nb2listw(knn2nb(knn_list_state), style = "W", zero.policy = TRUE)
@@ -70,7 +90,9 @@ print(moran_result_state)
 
 moran.plot(spatial_data_state$avg_cost_to_revenue_ratio, knn_weights_state, zero.policy = TRUE)
 
-
+# ----------------------------------------------
+# 6. Perform Geographically Weighted Regression (GWR) at State Level
+# ----------------------------------------------
 
 dependent_var <- spatial_data_state$avg_cost_to_revenue_ratio
 
@@ -109,7 +131,7 @@ spatial_gwr_data <- SpatialPointsDataFrame(
   proj4string = CRS("+proj=longlat +datum=WGS84")  # Set CRS to WGS84
 )
 
-
+                    
 gwr_bandwidth <- bw.gwr(
   formula = avg_cost_to_revenue_ratio ~ ., 
   data = spatial_gwr_data, 
@@ -149,6 +171,11 @@ ggsave(
   width = 8, height = 6, dpi = 150
 )
 
+                    
+# ----------------------------------------------
+# 7. Aggregate Data at County Level
+# ----------------------------------------------
+                    
 # We can also work on the GWR of the county level data
 
 final_output_for_ml <- "cleaned_data_final.csv"
