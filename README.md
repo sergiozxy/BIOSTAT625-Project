@@ -29,8 +29,8 @@ This project analyzes and forecasts hospital financial performance using the CMS
 
 ## R Shiny Walkthrough
 
-![Shiny Tab 1 Preview](../HospitalRevenue_map_ui/Shiny_t1.png)
-![Shiny Tab 2 Preview](../HospitalRevenue_map_ui/Shiny_t2.png)
+![Shiny Tab 1 Preview](HospitalRevenue_map_ui/Shiny_t1.png)
+![Shiny Tab 2 Preview](HospitalRevenue_map_ui/Shiny_t2.png)
 
 ### Deployed Version
 The R Shiny application is deployed at [https://xxchar.shinyapps.io/hospital-financial-analysis-ui/](https://xxchar.shinyapps.io/hospital-financial-analysis-ui/).
