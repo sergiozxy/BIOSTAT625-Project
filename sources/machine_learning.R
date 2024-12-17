@@ -98,6 +98,7 @@ results_r2 <- list(
   rf_permutation = c()
 )
 
+# initialize the result storage list
 results_rmse <- list(
   knn_gaussian = c(),
   knn_rectangular = c(),
@@ -247,6 +248,7 @@ print(head(variable_importance, 10))
 # Create a bar plot for the top 10 influential variables
 top_10_variables <- head(variable_importance, 10)
 
+# plot the result using ggplot2 for most influential factors
 plot <- ggplot(top_10_variables, aes(x = reorder(Variable, Importance), y = Importance)) +
   geom_bar(stat = "identity", fill = "skyblue") +
   coord_flip() +  # Flip coordinates to make it horizontal
@@ -257,4 +259,5 @@ plot <- ggplot(top_10_variables, aes(x = reorder(Variable, Importance), y = Impo
   ) +
   theme_minimal()  # Use a clean theme
 
+# save the result to a .png with dpi 150
 ggsave("./figures/top_10_influential_variables.png", plot = plot, width = 8, height = 6, dpi = 150)
