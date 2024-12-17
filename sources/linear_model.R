@@ -40,6 +40,7 @@ baseline_model <- lm(baseline_formula, data = data)
 # Print the summary of the regression
 model_summary <- summary(baseline_model)
 
+# now report all results to a table and store it in csv and then report using latex
 coeff_table <- as.data.frame(model_summary$coefficients)
 
 coeff_table <- cbind(Variable = rownames(coeff_table), coeff_table)
@@ -80,6 +81,7 @@ baseline_model2 <- lm(baseline_formula2, data = data)
 # Print the summary of the regression
 model_summary <- summary(baseline_model2)
 
+# now report all results to a table and store it in csv and then report using latex
 coeff_table <- as.data.frame(model_summary$coefficients)
 
 coeff_table <- cbind(Variable = rownames(coeff_table), coeff_table)
