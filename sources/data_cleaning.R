@@ -193,8 +193,8 @@ data_filtered <- data_filtered[data_filtered$`Revenue.per.Bed` <= 100, ]
 print(names(data))
 
 
-
-
+# can also use a for loop to do this
+# just make it all units to million instead of single
 
 data_filtered$Total.Salaries.From.Worksheet.A <- data_filtered$`Total.Salaries.From.Worksheet.A` / 1000000
 data_filtered$Inpatient.Total.Charges <- data_filtered$`Inpatient.Total.Charges` / 1000000
@@ -208,7 +208,6 @@ data_filtered$Total.Fixed.Assets <- data_filtered$`Total.Fixed.Assets` / 1000000
 data_filtered$General.Fund.Balance <- data_filtered$`General.Fund.Balance` / 1000000
 data_filtered$Total.Patient.Revenue <- data_filtered$`Total.Patient.Revenue` / 1000000
 data_filtered$Total.Patient.Revenue <- data_filtered$`Total.Patient.Revenue` / 1000000
-
 
 
 # convert above information to million instead of units
