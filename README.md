@@ -38,6 +38,10 @@ This project analyzes and forecasts hospital financial performance using the CMS
 - [spatial_analysis.R](https://github.com/sergiozxy/BIOSTAT625-Project/blob/main/sources/linear_model.R) is the code to carry out county level and state level geographically weighted regression model and it can be used to generate the result. You need to have a multicore computer (at least 4) to be able to run the code.
 - [machine_learning.R](https://github.com/sergiozxy/BIOSTAT625-Project/blob/main/sources/machine_learning.R) is the code to carry out the machine learning code, and it uses 5-fold cross validation to verify the result and it uses multiprocess techniques, and you also need to have a multicore computer (at least 4) to be able to run the code.
 
+## Detailed Reports
+
+Detailed Reports can be seen at [final_report](https://github.com/sergiozxy/BIOSTAT625-Project/blob/main/final_report/final_report.pdf)
+
 ## R Shiny Walkthrough
 
 ![Shiny Tab 1 Preview](HospitalRevenue_map_ui/Shiny_t1.png)
